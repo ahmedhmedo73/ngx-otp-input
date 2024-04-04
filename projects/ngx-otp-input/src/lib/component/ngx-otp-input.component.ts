@@ -45,7 +45,7 @@ export class NgxOtpInputComponent implements OnInit, AfterViewInit, OnDestroy {
     behavior: NgxOtpBehavior.DEFAULT,
   };
 
-  private defaultPattern = /^\d+$/;
+  private defaultPattern = /^[\d٠-٩]+$/;
   private DEFAULT_ARIA_LABEL = 'One time password input';
   private LAST_INPUT_INDEX!: number;
   private inputs!: HTMLInputElement[];
@@ -57,6 +57,7 @@ export class NgxOtpInputComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Output() otpChange: EventEmitter<string[]> = new EventEmitter<string[]>();
   @Output() fill: EventEmitter<string> = new EventEmitter<string>();
+  @Output() enter: EventEmitter<string> = new EventEmitter<string>();
 
   @HostListener('paste', ['$event']) onPaste(event: ClipboardEvent): void {
     event.preventDefault();
@@ -118,13 +119,19 @@ export class NgxOtpInputComponent implements OnInit, AfterViewInit, OnDestroy {
   handleKeyUp(index: number, value: string): void {
     if (this.otpConfig.pattern.test(value) && value !== 'Backspace') {
       this.addStyle(index, this.otpConfig.classList?.inputFilled);
+      this.getFormControlByIndex(index).setValue(
+        this.ngxOtpInputService.formatArabicNumber(value)
+      );
       if (!this.ngxOtpArray.valid) {
-        this.getFormControlByIndex(index).setValue(value);
         this.stepForward(index);
       } else {
         this.blur();
       }
     }
+  }
+
+  handleEnter(): void {
+    this.enter.emit();
   }
 
   handleDelete(index: number): void {
@@ -163,13 +170,24 @@ export class NgxOtpInputComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private otpFormChangeListener(): void {
-    this.ngxOtpArray$ = this.ngxOtpArray.valueChanges.subscribe((values) => {
-      this.otpChange.emit(values);
+    this.ngxOtpArray$ = this.ngxOtpArray.valueChanges.subscribe(
+      (values: string[]) => {
+        const newValues: string[] = values.map(
+          (value: string, index: number) => {
+            const newValue = this.ngxOtpInputService.formatArabicNumber(value);
+            if(newValue != value){
+              this.ngxOtpArray.controls[index].setValue(newValue);
+            }
+            return newValue;
+          }
+        );
+        this.otpChange.emit(newValues);
 
-      if (this.ngxOtpArray.valid) {
-        this.fill.emit(values.join(''));
+        if (this.ngxOtpArray.valid) {
+          this.fill.emit(newValues.join(''));
+        }
       }
-    });
+    );
   }
 
   private setUpOtpForm(): void {
@@ -214,7 +232,7 @@ export class NgxOtpInputComponent implements OnInit, AfterViewInit, OnDestroy {
       this.otpConfig.pattern = this.defaultPattern;
       this.inputs.map((element) => {
         element.setAttribute('inputmode', 'numeric');
-        element.setAttribute('pattern', '[0-9]*');
+        element.setAttribute('pattern', '[0-9٠-٩]*');
       });
     }
   }

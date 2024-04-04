@@ -43,4 +43,10 @@ export class NgxOtpInputService {
       return source;
     }
   }
+
+  formatArabicNumber(value: string) : string {
+    return value?.replace(/[٠-٩]/g, (digit: string) =>
+      "٠١٢٣٤٥٦٧٨٩".indexOf(digit).toString()
+    );
+  };
 }
