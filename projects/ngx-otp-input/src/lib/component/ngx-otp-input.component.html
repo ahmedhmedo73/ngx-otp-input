@@ -15,7 +15,7 @@
         [ngxOtpPattern]="otpConfig.pattern"
         [type]="otpConfig.isPasswordInput ? 'password' : 'text'"
           [ngClass]="styles?.length > 0 ? styles[i] : null"
-          [inputMode]="numeric"
+          [inputMode]="'numeric'"
         (keyup)="handleKeyUp(i, $event.key)"
         (keyup.backspace)="handleDelete(i)"
         (keyup.enter)="handleEnter(i, $event.key)"
